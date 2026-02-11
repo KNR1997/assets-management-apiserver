@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/knr1997/assets-management-apiserver/internal/auth"
 	"github.com/knr1997/assets-management-apiserver/internal/store"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -71,6 +71,18 @@ func (app *application) mount() http.Handler {
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("all good"))
+	})
+
+	r.Route("/categories", func(r chi.Router) {
+		r.Post("/", app.createCategoryHandler)
+
+		r.Route("/{categoryID}", func(r chi.Router) {
+			r.Use(app.categoryContextMiddleware)
+			r.Get("/", app.getCategoryHandler)
+
+			r.Patch("/", app.updateCategoryHandler)
+			r.Delete("/", app.deleteCategoryHandler)
+		})
 	})
 
 	// Public routes
