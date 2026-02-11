@@ -1,0 +1,92 @@
+package main
+
+import (
+	"time"
+
+	"github.com/knr1997/assets-management-apiserver/internal/auth"
+	"github.com/knr1997/assets-management-apiserver/internal/db"
+	"github.com/knr1997/assets-management-apiserver/internal/env"
+	"github.com/knr1997/assets-management-apiserver/internal/store"
+	"go.uber.org/zap"
+)
+
+const version = "1.1.0"
+
+// @title RSVP API
+// @version 1.0
+// @description REST API for RSVP backend
+// @termsOfService https://example.com/terms
+
+// @contact.name API Support
+// @contact.email support@example.com
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /
+func main() {
+	cfg := config{
+		addr: env.GetString("ADDR", ":8080"),
+		db: dbConfig{
+			addr:         env.GetString("DB_ADDR", "postgres://admin:adminpassword@localhost/rsvp?sslmode=disable"),
+			maxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 30),
+			maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 30),
+			maxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
+		},
+		auth: authConfig{
+			basic: basicConfig{
+				user: env.GetString("AUTH_BASIC_USER", "admin"),
+				pass: env.GetString("AUTH_BASIC_PASS", "admin"),
+			},
+			token: tokenConfig{
+				secret: env.GetString("AUTH_TOKEN_SECRET", "example"),
+				exp:    time.Hour * 24 * 3, // 3 days
+				iss:    "rsvp",
+			},
+		},
+	}
+
+	// Logger
+	logger := zap.Must(zap.NewProduction()).Sugar()
+	defer logger.Sync()
+
+	// Main Database
+	dbConn, err := db.New(
+		cfg.db.addr,
+		cfg.db.maxOpenConns,
+		cfg.db.maxIdleConns,
+		cfg.db.maxIdleTime,
+	)
+	err = dbConn.AutoMigrate(
+		&store.User{},
+	)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	sqlDB, _ := dbConn.DB()
+	defer sqlDB.Close()
+
+	logger.Info("database connection pool established")
+
+	// Authenticator
+	jwtAuthenticator := auth.NewJWTAuthenticator(
+		cfg.auth.token.secret,
+		cfg.auth.token.iss,
+		cfg.auth.token.iss,
+	)
+
+	store := store.NewStorage(dbConn)
+
+	app := &application{
+		config:        cfg,
+		store:         store,
+		logger:        logger,
+		authenticator: jwtAuthenticator,
+	}
+
+	mux := app.mount()
+
+	logger.Fatal(app.run(mux))
+}
