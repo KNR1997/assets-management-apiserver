@@ -20,6 +20,17 @@ type CategoryStore struct {
 	db *gorm.DB
 }
 
+func (s *CategoryStore) GetAll(ctx context.Context) ([]Category, error) {
+	var categories []Category
+
+	err := s.db.WithContext(ctx).Find(&categories).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return categories, nil
+}
+
 func (s *CategoryStore) GetByID(ctx context.Context, id int64) (*Category, error) {
 	var category Category
 

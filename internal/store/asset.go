@@ -44,6 +44,17 @@ type AssetStore struct {
 	db *gorm.DB
 }
 
+func (s *AssetStore) GetAll(ctx context.Context) ([]Asset, error) {
+	var assets []Asset
+
+	err := s.db.WithContext(ctx).Find(&assets).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return assets, nil
+}
+
 func (s *AssetStore) GetByID(ctx context.Context, id int64) (*Asset, error) {
 	var asset Asset
 
