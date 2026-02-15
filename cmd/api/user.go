@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/knr1997/assets-management-apiserver/internal/api/responses"
 	"github.com/knr1997/assets-management-apiserver/internal/store"
 )
 
@@ -59,4 +60,12 @@ func (app *application) updateUser(ctx context.Context, user *store.User) error 
 	}
 
 	return nil
+}
+
+func (app *application) meDetailsHandler(w http.ResponseWriter, r *http.Request) {
+	user := getUserFromContext(r)
+
+	resp := responses.NewUserResponse(user)
+
+	app.jsonResponse(w, http.StatusOK, resp)
 }
