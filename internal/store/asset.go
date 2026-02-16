@@ -47,7 +47,7 @@ type AssetStore struct {
 func (s *AssetStore) GetAll(ctx context.Context) ([]Asset, error) {
 	var assets []Asset
 
-	err := s.db.WithContext(ctx).Find(&assets).Error
+	err := s.db.WithContext(ctx).Preload("Category").Find(&assets).Error
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +95,23 @@ func (s *AssetStore) Update(ctx context.Context, asset *Asset) error {
 func (s *AssetStore) Delete(ctx context.Context, id int64) error {
 	result := s.db.WithContext(ctx).
 		Delete(&Asset{}, id)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
+func (s *AssetStore) UpdateStatus(ctx context.Context, assetID int64, status AssetStatus) error {
+	result := s.db.WithContext(ctx).
+		Model(&Asset{}).
+		Where("id = ?", assetID).
+		Update("status", status)
 
 	if result.Error != nil {
 		return result.Error
