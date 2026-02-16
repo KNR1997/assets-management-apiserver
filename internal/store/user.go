@@ -101,3 +101,14 @@ func (s *UsersStore) Update(ctx context.Context, user *User) error {
 
 	return nil
 }
+
+func (s *UsersStore) GetAll(ctx context.Context) ([]User, error) {
+	var users []User
+
+	err := s.db.WithContext(ctx).Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
