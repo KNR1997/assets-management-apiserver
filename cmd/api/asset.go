@@ -17,15 +17,40 @@ type assetKey string
 
 const assetCtx assetKey = "asset"
 
-type CreateAssetPayload struct {
-	Name         string `json:"name" validate:"required,max=100"`
-	SerialNumber string `json:"serialNumber" validate:"required,max=100"`
-	Description  string `json:"description"`
-	CategoryID   int64  `json:"categoryID" validate:"required"`
+func getAssetFromCtx(r *http.Request) *store.Asset {
+	asset, _ := r.Context().Value(assetCtx).(*store.Asset)
+	return asset
+}
+
+func (app *application) assetContextMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		idParam := chi.URLParam(r, "assetID")
+		id, err := strconv.ParseInt(idParam, 10, 64)
+		if err != nil {
+			app.internalServerError(w, r, err)
+			return
+		}
+
+		ctx := r.Context()
+
+		asset, err := app.store.Asset.GetByID(ctx, id)
+		if err != nil {
+			switch {
+			case errors.Is(err, store.ErrNotFound):
+				app.notFoundResponse(w, r, err)
+			default:
+				app.internalServerError(w, r, err)
+			}
+			return
+		}
+
+		ctx = context.WithValue(ctx, assetCtx, asset)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 func (app *application) createAssetHandler(w http.ResponseWriter, r *http.Request) {
-	var payload CreateAssetPayload
+	var payload requests.CreateAssetPayload
 	if err := readJSON(w, r, &payload); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
@@ -56,15 +81,18 @@ func (app *application) createAssetHandler(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-type UpdateAssetPayload struct {
-	Name        *string `json:"name" validate:"omitempty,max=100"`
-	Description *string `json:"description"`
+func (app *application) updateAsset(ctx context.Context, asset *store.Asset) error {
+	if err := app.store.Asset.Update(ctx, asset); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (app *application) updateAssetHandler(w http.ResponseWriter, r *http.Request) {
 	asset := getAssetFromCtx(r)
 
-	var payload UpdateAssetPayload
+	var payload requests.UpdateAssetPayload
 	if err := readJSON(w, r, &payload); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
@@ -170,6 +198,7 @@ func (app *application) checkoutAssetHandler(w http.ResponseWriter, r *http.Requ
 		UserID:              payload.UserID,
 		CheckoutDate:        payload.CheckoutDate,
 		ExpectedCheckinDate: payload.ExpectedCheckinDate,
+		Status:              store.AssetPending,
 		Notes:               payload.Notes,
 	}
 
@@ -186,42 +215,31 @@ func (app *application) checkoutAssetHandler(w http.ResponseWriter, r *http.Requ
 	})
 }
 
-func (app *application) assetContextMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		idParam := chi.URLParam(r, "assetID")
-		id, err := strconv.ParseInt(idParam, 10, 64)
-		if err != nil {
-			app.internalServerError(w, r, err)
-			return
-		}
+func (app *application) checkinAssetHandler(w http.ResponseWriter, r *http.Request) {
+	asset := getAssetFromCtx(r)
+	var payload requests.CheckinAssetPayload
 
-		ctx := r.Context()
-
-		asset, err := app.store.Asset.GetByID(ctx, id)
-		if err != nil {
-			switch {
-			case errors.Is(err, store.ErrNotFound):
-				app.notFoundResponse(w, r, err)
-			default:
-				app.internalServerError(w, r, err)
-			}
-			return
-		}
-
-		ctx = context.WithValue(ctx, assetCtx, asset)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-func getAssetFromCtx(r *http.Request) *store.Asset {
-	asset, _ := r.Context().Value(assetCtx).(*store.Asset)
-	return asset
-}
-
-func (app *application) updateAsset(ctx context.Context, asset *store.Asset) error {
-	if err := app.store.Asset.Update(ctx, asset); err != nil {
-		return err
+	if err := readJSON(w, r, &payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
 	}
 
-	return nil
+	if err := Validate.Struct(payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	ctx := r.Context()
+
+	if err := app.store.Asset.UpdateStatus(ctx, asset.ID, store.AssetStatus(payload.Status)); err != nil {
+		app.internalServerError(w, r, err)
+	}
+
+	// if err := app.store.AssetLoan.UpdateStatus(ctx, asset.ID, store.AssetReadyToDeploy); err != nil {
+	// 	app.internalServerError(w, r, err)
+	// }
+
+	app.jsonResponse(w, http.StatusCreated, map[string]string{
+		"status": "asset checkin successfully",
+	})
 }
