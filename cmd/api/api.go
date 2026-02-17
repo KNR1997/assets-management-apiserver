@@ -97,6 +97,19 @@ func (app *application) mount() http.Handler {
 		})
 	})
 
+	r.Route("/api/manufacturers", func(r chi.Router) {
+		r.Get("/", app.getAllManufacturerHandler)
+		r.Post("/", app.createManufacturerHandler)
+
+		r.Route("/{manufacturerID}", func(r chi.Router) {
+			r.Use(app.manufacturerContextMiddleware)
+			r.Get("/", app.getManufacturerHandler)
+
+			r.Patch("/", app.updateManufacturerHandler)
+			r.Delete("/", app.deleteManufacturerHandler)
+		})
+	})
+
 	r.Route("/api/assets", func(r chi.Router) {
 		r.Get("/", app.getAllAssetHandler)
 		r.Post("/", app.createAssetHandler)
@@ -107,6 +120,9 @@ func (app *application) mount() http.Handler {
 
 			r.Patch("/", app.updateAssetHandler)
 			r.Delete("/", app.deleteAssetHandler)
+
+			r.Post("/checkout", app.checkoutAssetHandler)
+			r.Post("/checkin", app.checkinAssetHandler)
 		})
 	})
 
@@ -122,6 +138,20 @@ func (app *application) mount() http.Handler {
 	r.Route("/api/me", func(r chi.Router) {
 		r.Use(app.AuthTokenMiddleware)
 		r.Get("/", app.meDetailsHandler)
+	})
+
+	r.Route("/api/users", func(r chi.Router) {
+		r.Use(app.AuthTokenMiddleware)
+		r.Get("/", app.getAllUserHandler)
+		// r.Post("/", app.createAssetHandler)
+
+		r.Route("/{userID}", func(r chi.Router) {
+			r.Use(app.userContextMiddleware)
+			// r.Get("/", app.getAssetHandler)
+
+			r.Patch("/", app.updateUserHandler)
+			// r.Delete("/", app.deleteAssetHandler)
+		})
 	})
 
 	// Public routes
