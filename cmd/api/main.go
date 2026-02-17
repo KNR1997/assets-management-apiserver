@@ -60,6 +60,11 @@ func main() {
 	)
 	err = dbConn.AutoMigrate(
 		&store.User{},
+		&store.Category{},
+		&store.Asset{},
+		&store.AssetAssignment{},
+		&store.AssetLoan{},
+		&store.Manufacturer{},
 	)
 	if err != nil {
 		logger.Fatal(err)
