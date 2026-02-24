@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { h } from 'vue'
+import { computed, h } from 'vue'
 import { NButton, NPopconfirm } from 'naive-ui'
 // hooks
 import { useDeleteCategoryMutation } from '@/data/category'
 // utils
 import { renderIcon } from '@/utils'
 // types
-import type { Category } from '@/types'
+import type { Category, MappedPaginatorInfo } from '@/types'
 // hooks
 import { useModalStore } from '@/store/modal'
 // components
@@ -16,6 +16,9 @@ import CategoryModal from './CategoryModal.vue'
 const props = defineProps<{
   loading: boolean
   tableData: Category[]
+  paginatorInfo: MappedPaginatorInfo | null
+  page: number
+  limit: number
 }>()
 const modal = useModalStore()
 
@@ -34,6 +37,25 @@ function onEdit(category: any) {
 async function deleteRow(row: Category) {
   await deleteCategory({ id: row.id })
 }
+
+const emit = defineEmits<{
+  (e: 'update:page', page: number): void
+  (e: 'update:pageSize', pageSize: number): void
+}>()
+
+const pagination = computed(() => ({
+  page: props.page,
+  pageSize: props.limit,
+  itemCount: props.paginatorInfo?.totalRows ?? 0,
+  showSizePicker: true,
+  pageSizes: [10, 20, 50, 100],
+  onUpdatePage: (page: number) => {
+    emit('update:page', page)
+  },
+  onUpdatePageSize: (pageSize: number) => {
+    emit('update:pageSize', pageSize)
+  },
+}))
 
 const columns = [
   {
@@ -85,5 +107,11 @@ const columns = [
 </script>
 
 <template>
-  <n-data-table :loading="loading" :columns="columns" :data="tableData" />
+  <n-data-table
+    :loading="loading"
+    :columns="columns"
+    :data="tableData"
+    :pagination="paginatorInfo ? pagination : false"
+    remote
+  />
 </template>

@@ -1,19 +1,21 @@
-import { computed } from 'vue'
 import { useMessage } from 'naive-ui'
 import { categoryClient } from './client/category'
 import { API_ENDPOINTS } from './client/api-endpoints'
-import type { Category, CategoryQueryOptions } from '@/types'
+import type { Category, CategoryPaginator, CategoryQueryOptions } from '@/types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { computedAsync } from '@vueuse/core'
+import { mapPaginatorData } from '@/utils/data-mappers'
 
 export const useCategoriesQuery = (options: Partial<CategoryQueryOptions>) => {
-  const { data, error, isPending } = useQuery<Category[], Error>({
+  const { data, error, isPending } = useQuery<CategoryPaginator, Error>({
     queryKey: [API_ENDPOINTS.CATEGORIES, options],
-    queryFn: () => categoryClient.all(options as CategoryQueryOptions),
+    queryFn: ({ queryKey, pageParam }) =>
+      categoryClient.paginated(Object.assign({}, queryKey[1], pageParam)),
   })
-  // @ts-ignore
-  const categories = computed<Category[]>(() => data.value ?? []) // todo -> fix
+  const categories = computedAsync<Category[]>(() => data.value?.rows ?? []) // todo -> fix
   return {
     categories,
+    paginatorInfo: mapPaginatorData(data.value),
     error,
     loading: isPending,
   }

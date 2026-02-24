@@ -1,3 +1,4 @@
+import type { Ref } from "vue"
 import type { AssetStatus } from "./enum"
 
 export enum SortOrder {
@@ -20,6 +21,9 @@ export interface MappedPaginatorInfo {
   to: number
   total: number
   hasMorePages: boolean
+  page: number
+  limit: number
+  totalRows: number
 }
 
 export interface GetParams {
@@ -28,18 +32,20 @@ export interface GetParams {
 
 export interface QueryOptions {
   language: string
-  limit?: number
-  page?: number
+  limit?: Ref<number, number>
+  page?: Ref<number, number>
   orderBy?: string
   sortedBy?: SortOrder
   per_page?: number
 }
 
 export interface PaginatorInfo<T> {
-  list: T[]
-  total: number
+  limit: number
   page: number
-  pageSize: number
+  sort: string
+  total_rows: number
+  total_pages: number
+  rows: T[]
 }
 
 export interface LoginInput {

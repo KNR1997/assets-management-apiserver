@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { NButton } from 'naive-ui'
 // hooks
 import { useModalStore } from '@/store/modal'
@@ -9,8 +10,24 @@ import CommonPage from '@/components/page/CommonPage.vue'
 import CategoryList from '@/components/category/CategoryList.vue'
 import CategoryModal from '@/components/category/CategoryModal.vue'
 
+const page = ref(1)
+const limit = ref(10)
+
 // query
-const { categories, loading } = useCategoriesQuery({})
+const { categories, paginatorInfo, loading } = useCategoriesQuery({
+  limit: limit,
+  page: page,
+})
+
+function handlePageChange(newPage: number) {
+  page.value = newPage
+}
+
+function handlePageSizeChange(newSize: number) {
+  limit.value = newSize
+  page.value = 1 // reset to first page (important UX rule)
+}
+
 // store hooks
 const modal = useModalStore()
 
@@ -30,6 +47,14 @@ function openCreateModal() {
         </NButton>
       </div>
     </template>
-    <CategoryList :loading="loading" :table-data="categories" />
+    <CategoryList
+      :loading="loading"
+      :table-data="categories"
+      :paginatorInfo="paginatorInfo"
+      :page="page"
+      :limit="limit"
+      @update:page="handlePageChange"
+      @update:pageSize="handlePageSizeChange"
+    />
   </CommonPage>
 </template>
