@@ -17,7 +17,8 @@ type Category struct {
 }
 
 type CategoryStore struct {
-	db *gorm.DB
+	db           *gorm.DB
+	auditService AuditService
 }
 
 func (s *CategoryStore) GetAll(ctx context.Context) ([]Category, error) {
@@ -45,40 +46,63 @@ func (s *CategoryStore) GetByID(ctx context.Context, id int64) (*Category, error
 }
 
 func (s CategoryStore) Create(ctx context.Context, category *Category) error {
-	return s.db.WithContext(ctx).Create(category).Error
+	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+
+		if err := tx.Create(category).Error; err != nil {
+			return err
+		}
+
+		return s.auditService.LogCreate(
+			ctx,
+			tx,
+			"categories",
+			category.ID,
+			category,
+		)
+	})
 }
 
 func (s *CategoryStore) Update(ctx context.Context, category *Category) error {
-	result := s.db.WithContext(ctx).
-		Model(&Category{}).
-		Where("id = ?", category.ID).
-		Updates(map[string]interface{}{
-			"name":        category.Name,
-			"description": category.Description,
-		})
+	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
-	if result.Error != nil {
-		return result.Error
-	}
+		var oldCategory Category
+		if err := tx.First(&oldCategory, category.ID).Error; err != nil {
+			return err
+		}
 
-	if result.RowsAffected == 0 {
-		return ErrNotFound
-	}
+		if err := tx.Save(category).Error; err != nil {
+			return err
+		}
 
-	return nil
+		return s.auditService.LogUpdate(
+			ctx,
+			tx,
+			"categories",
+			category.ID,
+			oldCategory,
+			category,
+		)
+	})
 }
 
 func (s *CategoryStore) Delete(ctx context.Context, id int64) error {
-	result := s.db.WithContext(ctx).
-		Delete(&Category{}, id)
+	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
-	if result.Error != nil {
-		return result.Error
-	}
+		var category Category
+		if err := tx.First(&category, id).Error; err != nil {
+			return err
+		}
 
-	if result.RowsAffected == 0 {
-		return ErrNotFound
-	}
+		if err := tx.Delete(&category, id).Error; err != nil {
+			return err
+		}
 
-	return nil
+		return s.auditService.LogDelete(
+			ctx,
+			tx,
+			"categories",
+			id,
+			category,
+		)
+	})
 }
