@@ -97,6 +97,45 @@ func (app *application) mount() http.Handler {
 		})
 	})
 
+	r.Route("/api/departments", func(r chi.Router) {
+		r.Get("/", app.getAlldepartmentHandler)
+		r.Post("/", app.createdepartmentHandler)
+
+		r.Route("/{departmentID}", func(r chi.Router) {
+			r.Use(app.departmentContextMiddleware)
+			r.Get("/", app.getdepartmentHandler)
+
+			r.Patch("/", app.updatedepartmentHandler)
+			r.Delete("/", app.deletedepartmentHandler)
+		})
+	})
+
+	r.Route("/api/suppliers", func(r chi.Router) {
+		r.Get("/", app.getAllSupplierHandler)
+		r.Post("/", app.createSupplierHandler)
+
+		r.Route("/{supplierID}", func(r chi.Router) {
+			r.Use(app.supplierContextMiddleware)
+			r.Get("/", app.getSupplierHandler)
+
+			r.Patch("/", app.updateSupplierHandler)
+			r.Delete("/", app.deleteSupplierHandler)
+		})
+	})
+
+	r.Route("/api/models", func(r chi.Router) {
+		r.Get("/", app.getAllModelHandler)
+		r.Post("/", app.createModelHandler)
+
+		r.Route("/{modelID}", func(r chi.Router) {
+			r.Use(app.modelContextMiddleware)
+			r.Get("/", app.getModelHandler)
+
+			r.Patch("/", app.updateModelHandler)
+			r.Delete("/", app.deleteModelHandler)
+		})
+	})
+
 	r.Route("/api/manufacturers", func(r chi.Router) {
 		r.Get("/", app.getAllManufacturerHandler)
 		r.Post("/", app.createManufacturerHandler)

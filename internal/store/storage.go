@@ -16,22 +16,32 @@ var (
 
 type Storage struct {
 	Users           UsersStore
+	Manufacturer    ManufacturerStore
 	Category        CategoryStore
 	Asset           AssetStore
 	AssetAssignment AssetAssignmentStore
+	AssetLoan       AssetLoanStore
 	AssetLog        AssetLogStore
+	Model           ModelStore
+	Department      DepartmentStore
+	Supplier        SupplierStore
 	Roles           interface {
 		GetByName(context.Context, string) (*Role, error)
 	}
 }
 
-func NewStorage(db *gorm.DB) Storage {
+func NewStorage(db *gorm.DB, auditService AuditService) Storage {
 	return Storage{
 		Users:           UsersStore{db},
-		Category:        CategoryStore{db},
+		Manufacturer:    ManufacturerStore{db},
+		Category:        CategoryStore{db, auditService},
 		Asset:           AssetStore{db},
 		AssetAssignment: AssetAssignmentStore{db},
+		AssetLoan:       AssetLoanStore{db},
 		AssetLog:        AssetLogStore{db},
+		Model:           ModelStore{db},
+		Department:      DepartmentStore{db},
+		Supplier:        SupplierStore{db},
 		Roles:           &RoleStore{db},
 	}
 }
