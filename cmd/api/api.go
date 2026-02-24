@@ -88,7 +88,7 @@ func (app *application) mount() http.Handler {
 		r.Use(app.AuthTokenMiddleware)
 		r.Use(app.AuditContextMiddleware)
 
-		r.Get("/", app.getAllCategoryHandler)
+		r.Get("/", app.getPaginatedCategoryHandler)
 		r.Post("/", app.createCategoryHandler)
 
 		r.Route("/{categoryID}", func(r chi.Router) {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/knr1997/assets-management-apiserver/internal/store"
+	"github.com/knr1997/assets-management-apiserver/internal/utils"
 )
 
 type categoryKey string
@@ -135,6 +136,38 @@ func (app *application) getAllCategoryHandler(w http.ResponseWriter, r *http.Req
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func (app *application) getPaginatedCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	p := utils.ParsePagination(r)
+
+	result, err := app.store.Category.List(store.Pagination{
+		Limit: p.Limit,
+		Page:  p.Page,
+	})
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	// Type assert rows
+	categories, ok := result.Rows.([]*store.Category)
+	if !ok {
+		app.internalServerError(w, r, errors.New("invalid category type"))
+		return
+	}
+
+	// Convert to response DTO
+	responses := make([]CategoryResponse, 0, len(categories))
+	for _, c := range categories {
+		responses = append(responses, ToCategoryResponse(c))
+	}
+
+	// Replace rows with DTO
+	result.Rows = responses
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
 }
 
 func (app *application) deleteCategoryHandler(w http.ResponseWriter, r *http.Request) {

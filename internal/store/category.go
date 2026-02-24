@@ -32,6 +32,15 @@ func (s *CategoryStore) GetAll(ctx context.Context) ([]Category, error) {
 	return categories, nil
 }
 
+func (s *CategoryStore) List(pagination Pagination) (*Pagination, error) {
+	var categories []*Category
+
+	s.db.Scopes(paginate(categories, &pagination, s.db)).Find(&categories)
+	pagination.Rows = categories
+
+	return &pagination, nil
+}
+
 func (s *CategoryStore) GetByID(ctx context.Context, id int64) (*Category, error) {
 	var category Category
 
