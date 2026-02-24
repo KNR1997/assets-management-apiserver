@@ -85,6 +85,9 @@ func (app *application) mount() http.Handler {
 	})
 
 	r.Route("/api/categories", func(r chi.Router) {
+		r.Use(app.AuthTokenMiddleware)
+		r.Use(app.AuditContextMiddleware)
+
 		r.Get("/", app.getAllCategoryHandler)
 		r.Post("/", app.createCategoryHandler)
 
