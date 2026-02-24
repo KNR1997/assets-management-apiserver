@@ -65,6 +65,10 @@ func main() {
 		&store.AssetAssignment{},
 		&store.AssetLoan{},
 		&store.Manufacturer{},
+		&store.Model{},
+		&store.Department{},
+		&store.Supplier{},
+		&store.AuditLog{},
 	)
 	if err != nil {
 		logger.Fatal(err)
@@ -82,7 +86,10 @@ func main() {
 		cfg.auth.token.iss,
 	)
 
-	store := store.NewStorage(dbConn)
+	auditRepo := store.NewAuditRepository()
+	auditService := store.NewAuditService(auditRepo)
+
+	store := store.NewStorage(dbConn, auditService)
 
 	app := &application{
 		config:        cfg,
