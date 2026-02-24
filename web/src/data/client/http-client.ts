@@ -1,3 +1,4 @@
+import { getToken } from '@/utils/auth/token';
 import axios, { type AxiosError } from 'axios'
 
 // create an Axios instance
@@ -9,23 +10,25 @@ const Axios = axios.create({
   headers: { 'Content-Type': 'application/json;charset=utf-8' },
 })
 
-// Axios.interceptors.request.use(
-//   (config) => {
-//     // 1️⃣ Dynamic base API (Electron setup)
-//     // const baseApi = baseURL();
+Axios.interceptors.request.use(
+  (config) => {
+    // 1️⃣ Dynamic base API (Electron setup)
+    // const baseApi = baseURL();
 
-//     // 2️⃣ Inject auth token (Zustand-safe)
-//     // const { userToken } = useUserStore.getState();
-//     // const accessToken = userToken?.accessToken;
+    // 2️⃣ Inject auth token (Zustand-safe)
+    // const { userToken } = useUserStore.getState();
+    // const accessToken = userToken?.accessToken;
 
-//     // if (accessToken) {
-//     //   config.headers.Authorization = `Bearer ${accessToken}`;
-//     // }
+    const accessToken = getToken();
 
-//     return config;
-//   },
-//   (error) => Promise.reject(error)
-// );
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Change response data/error here
 // Axios.interceptors.response.use(

@@ -1,5 +1,7 @@
 import type {
   Asset,
+  AssetCheckinInput,
+  AssetCheckoutInput,
   AssetCreateInput,
   AssetPaginator,
   AssetQueryOptions,
@@ -18,5 +20,11 @@ export const assetClient = {
       ...params,
       // search: HttpClient.formatSearchParams({ name }),
     })
+  },
+  checkout: (variables: AssetCheckoutInput) => {
+    return HttpClient.post(`${API_ENDPOINTS.ASSETS}/${variables.assetId}/checkout`, variables)
+  },
+  checkin: (variables: AssetCheckinInput) => {
+    return HttpClient.post(`${API_ENDPOINTS.ASSETS}/${variables.assetId}/checkin`, variables)
   },
 }

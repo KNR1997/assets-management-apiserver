@@ -36,6 +36,7 @@ import { kebabCase } from 'lodash-es'
 import { setupMessage, setupDialog } from '@/utils'
 import { naiveThemeOverrides } from '~/settings'
 import { useAppStore } from '@/store'
+import { enUS, dateEnUS } from 'naive-ui'
 
 const appStore = useAppStore()
 

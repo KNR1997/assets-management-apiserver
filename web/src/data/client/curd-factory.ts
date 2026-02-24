@@ -21,7 +21,7 @@ export function crudFactory<Type, QueryParams, InputType>(endpoint: string) {
     patch({ id, ...input }: Partial<InputType> & { id: string }) {
       return HttpClient.patch<Type>(`${endpoint}/${id}`, input)
     },
-    delete({ id }: { id: number }) {
+    delete({ id }: { id: string }) {
       return HttpClient.delete<boolean>(`${endpoint}/${id}`)
     },
   }

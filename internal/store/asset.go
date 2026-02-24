@@ -14,16 +14,23 @@ const (
 	AssetAssigned  AssetStatus = "ASSIGNED"
 	AssetRepair    AssetStatus = "REPAIR"
 	AssetRetired   AssetStatus = "RETIRED"
+
+	AssetPending       AssetStatus = "PENDING"
+	AssetReadyToDeploy AssetStatus = "READY_TO_DEPLOY"
+	AssetArchived      AssetStatus = "ARCHIVED"
+	AssetBroken        AssetStatus = "BROKEN"
+	AssetLostStolen    AssetStatus = "LOST_STOLEN"
 )
 
 type Asset struct {
 	ID           int64  `gorm:"primaryKey"`
 	Name         string `gorm:"size:150;not null"`
 	SerialNumber string `gorm:"size:100;uniqueIndex;not null"`
+	Tag          string `gorm:"size:100;uniqueIndex;not null"`
 	Description  string `gorm:"size:255"`
 
-	CategoryID int64    `gorm:"not null;index"`
-	Category   Category `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
+	ModelID int64 `gorm:"not null;index"`
+	Model   Model `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
 
 	Status AssetStatus `gorm:"type:varchar(20);not null;default:'AVAILABLE'"`
 
@@ -47,7 +54,7 @@ type AssetStore struct {
 func (s *AssetStore) GetAll(ctx context.Context) ([]Asset, error) {
 	var assets []Asset
 
-	err := s.db.WithContext(ctx).Preload("Category").Find(&assets).Error
+	err := s.db.WithContext(ctx).Preload("Model").Find(&assets).Error
 	if err != nil {
 		return nil, err
 	}
@@ -58,9 +65,7 @@ func (s *AssetStore) GetAll(ctx context.Context) ([]Asset, error) {
 func (s *AssetStore) GetByID(ctx context.Context, id int64) (*Asset, error) {
 	var asset Asset
 
-	err := s.db.WithContext(ctx).
-		First(&asset, id).
-		Error
+	err := s.db.WithContext(ctx).Preload("Model").First(&asset, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -77,8 +82,10 @@ func (s *AssetStore) Update(ctx context.Context, asset *Asset) error {
 		Model(&Asset{}).
 		Where("id = ?", asset.ID).
 		Updates(map[string]interface{}{
-			"name":        asset.Name,
-			"description": asset.Description,
+			"name":         asset.Name,
+			"tag":          asset.Tag,
+			"serialNumber": asset.SerialNumber,
+			"description":  asset.Description,
 		})
 
 	if result.Error != nil {

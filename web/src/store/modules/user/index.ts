@@ -1,29 +1,18 @@
+import { defineStore } from 'pinia'
 import { resetRouter } from '@/router'
 import { toLogin } from '@/utils/auth/auth'
 import { removeToken } from '@/utils/auth/token'
-import { defineStore } from 'pinia'
+
 export const useUserStore = defineStore('user', {
-  state() {
-    return {
-      userInfo: {},
-    }
-  },
+  state: () => ({
+    userInfo: null as any,
+  }),
   getters: {
-    // userId() {
-    //   return this.userInfo?.id
-    // },
-    // name() {
-    //   return this.userInfo?.username
-    // },
-    // email() {
-    //   return this.userInfo?.email
-    // },
-    // avatar() {
-    //   return this.userInfo?.avatar
-    // },
-    // role() {
-    //   return this.userInfo?.roles || []
-    // },
+    userId: (state) => state.userInfo?.id ?? null,
+    username: (state) => state.userInfo?.username ?? '',
+    email: (state) => state.userInfo?.email ?? '',
+    avatar: (state) => state.userInfo?.avatar ?? '',
+    role: (state) => state.userInfo?.role ?? 'user',
     // isSuperUser() {
     //   return this.userInfo?.is_superuser
     // },
@@ -32,30 +21,15 @@ export const useUserStore = defineStore('user', {
     // },
   },
   actions: {
-    // async getUserInfo() {
-    //   try {
-    //     const res = await api.getUserInfo()
-    //     if (res.code === 401) {
-    //       this.logout()
-    //       return
-    //     }
-    //     const { id, username, email, avatar, roles, is_superuser, is_active } = res.data
-    //     this.userInfo = { id, username, email, avatar, roles, is_superuser, is_active }
-    //     return res.data
-    //   } catch (error) {
-    //     return error
-    //   }
-    // },
     async logout() {
-      console.log('logout happen-----------------')
-      //   const { resetTags } = useTagsStore()
-      //   const { resetPermission } = usePermissionStore()
       removeToken()
-      //   resetTags()
-      //   resetPermission()
       resetRouter()
       this.$reset()
       toLogin()
+      //   const { resetTags } = useTagsStore()
+      //   const { resetPermission } = usePermissionStore()
+      //   resetTags()
+      //   resetPermission()
     },
     setUserInfo(userInfo = {}) {
       this.userInfo = { ...this.userInfo, ...userInfo }

@@ -1,30 +1,28 @@
 <script setup lang="ts">
 import { NButton } from 'naive-ui'
 // hooks
+import { useUsersQuery } from '@/data/user'
 import { useModalStore } from '@/store/modal'
-import { useAssetsQuery } from '@/data/asset'
 // components
 import TheIcon from '@/components/icon/TheIcon.vue'
+import UserList from '@/components/user/UserList.vue'
 import CommonPage from '@/components/page/CommonPage.vue'
-import AssetList from '@/components/asset/AssetList.vue'
-import AssetModal from '@/components/asset/AssetModal.vue'
-import { router } from '@/router'
+import UserCreateUpdateModal from '@/components/user/UserCreateUpdateModal.vue'
 
 // query
-const { assets, loading } = useAssetsQuery({})
+const { users, loading } = useUsersQuery({})
 // store hooks
 const modal = useModalStore()
 
 function openCreateModal() {
-  // modal.open(AssetModal, {
-  //   title: 'Create Asset',
-  // })
-  router.push('/assets/create')
+  modal.open(UserCreateUpdateModal, {
+    title: 'Create User',
+  })
 }
 </script>
 
 <template>
-  <CommonPage show-footer title="Asset List">
+  <CommonPage show-footer title="User List">
     <template #action>
       <div>
         <NButton class="float-right mr-15" type="primary" @click="openCreateModal">
@@ -32,6 +30,6 @@ function openCreateModal() {
         </NButton>
       </div>
     </template>
-    <AssetList :loading="loading" :table-data="assets" />
+    <UserList :loading="loading" :table-data="users" />
   </CommonPage>
 </template>

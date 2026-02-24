@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { h } from 'vue'
-import { NButton, NPopconfirm } from 'naive-ui'
+import { NButton, NPopconfirm, NTag } from 'naive-ui'
 // hooks
 import { useDeleteAssetMutation } from '@/data/asset'
 // utils
 import { renderIcon } from '@/utils'
 // types
 import type { Asset } from '@/types'
+import { AssetStatus } from '@/types/enum'
 // hooks
+import { useRouter } from 'vue-router'
 import { useModalStore } from '@/store/modal'
 // components
-import AssetModal from './AssetModal.vue'
+import CheckoutModal from './CheckoutModal.vue'
+import CheckinModal from './CheckinModal.vue'
 
 // Define props
 const props = defineProps<{
@@ -18,17 +21,35 @@ const props = defineProps<{
   tableData: Asset[]
 }>()
 const modal = useModalStore()
-
+const router = useRouter()
 // mutation
 const { mutateAsync: deleteAsset } = useDeleteAssetMutation()
 
-function onEdit(asset: any) {
-  modal.open(AssetModal, {
-    title: 'Edit Asset',
-    props: {
-      asset,
+function onEdit(asset: Asset) {
+  router.push({
+    name: 'Asset Edit',
+    params: {
+      id: asset.id,
     },
   })
+}
+
+function handleCheckoutCheckin(asset: Asset) {
+  if (asset.status == AssetStatus.AssetAssigned) {
+    modal.open(CheckinModal, {
+      title: 'Checkin Asset',
+      props: {
+        asset,
+      },
+    })
+  } else if (asset.status == AssetStatus.AssetAvailable) {
+    modal.open(CheckoutModal, {
+      title: 'Checkout Asset',
+      props: {
+        asset,
+      },
+    })
+  }
 }
 
 async function deleteRow(row: any) {
@@ -42,16 +63,55 @@ const columns = [
     width: 200,
   },
   {
-    title: 'Serial No.',
+    title: 'Serial',
     key: 'serialNumber',
     ellipsis: true,
-    width: 300,
+    width: 150,
   },
-    {
+  // {
+  //   title: 'Model',
+  //   key: 'model',
+  //   ellipsis: true,
+  //   width: 150,
+  // },
+  {
     title: 'Status',
     key: 'status',
-    ellipsis: true,
-    width: 300,
+    width: 150,
+    render(row: Asset) {
+      const isDeployed = row.status === AssetStatus.AssetAssigned
+      return h(
+        NTag,
+        {
+          round: true,
+          bordered: false,
+          type: isDeployed ? 'warning' : 'success',
+        },
+        {
+          default: () => (isDeployed ? 'Deployed' : row.status),
+        },
+      )
+    },
+  },
+  {
+    title: 'Checkin/Checkout',
+    key: 'status',
+    width: 200,
+    render(row: Asset) {
+      return [
+        h(
+          NButton,
+          {
+            size: 'small',
+            color: row.status == AssetStatus.AssetAssigned ? '#605ca8' : '#D81B60',
+            type: 'primary',
+            onClick: () => handleCheckoutCheckin(row),
+            disabled: row.status == AssetStatus.AssetBroken,
+          },
+          { default: () => (row.status == AssetStatus.AssetAssigned ? 'Checkin' : 'Checkout') },
+        ),
+      ]
+    },
   },
   {
     title: 'Actions',

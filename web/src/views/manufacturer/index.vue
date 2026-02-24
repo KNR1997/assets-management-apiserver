@@ -2,29 +2,27 @@
 import { NButton } from 'naive-ui'
 // hooks
 import { useModalStore } from '@/store/modal'
-import { useAssetsQuery } from '@/data/asset'
+import { useManufacturersQuery } from '@/data/manufacturer'
 // components
 import TheIcon from '@/components/icon/TheIcon.vue'
 import CommonPage from '@/components/page/CommonPage.vue'
-import AssetList from '@/components/asset/AssetList.vue'
-import AssetModal from '@/components/asset/AssetModal.vue'
-import { router } from '@/router'
+import ManufacturerList from '@/components/manufacturer/ManufacturerList.vue'
+import ManufacturerModal from '@/components/manufacturer/ManufacturerModal.vue'
 
 // query
-const { assets, loading } = useAssetsQuery({})
+const { manufacturers, loading } = useManufacturersQuery({})
 // store hooks
 const modal = useModalStore()
 
 function openCreateModal() {
-  // modal.open(AssetModal, {
-  //   title: 'Create Asset',
-  // })
-  router.push('/assets/create')
+  modal.open(ManufacturerModal, {
+    title: 'Create Manufacturer',
+  })
 }
 </script>
 
 <template>
-  <CommonPage show-footer title="Asset List">
+  <CommonPage show-footer title="Manufacturer List">
     <template #action>
       <div>
         <NButton class="float-right mr-15" type="primary" @click="openCreateModal">
@@ -32,6 +30,6 @@ function openCreateModal() {
         </NButton>
       </div>
     </template>
-    <AssetList :loading="loading" :table-data="assets" />
+    <ManufacturerList :loading="loading" :table-data="manufacturers" />
   </CommonPage>
 </template>

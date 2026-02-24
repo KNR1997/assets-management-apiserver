@@ -63,9 +63,10 @@ func (app *application) createAssetHandler(w http.ResponseWriter, r *http.Reques
 
 	asset := &store.Asset{
 		Name:         payload.Name,
+		Tag:          payload.Tag,
 		SerialNumber: payload.SerialNumber,
 		Description:  payload.Description,
-		CategoryID:   payload.CategoryID,
+		ModelID:      payload.ModelID,
 	}
 
 	ctx := r.Context()
@@ -105,6 +106,15 @@ func (app *application) updateAssetHandler(w http.ResponseWriter, r *http.Reques
 
 	if payload.Name != nil {
 		asset.Name = *payload.Name
+	}
+	if payload.Tag != nil {
+		asset.Tag = *payload.Tag
+	}
+	if payload.SerialNumber != nil {
+		asset.SerialNumber = *payload.SerialNumber
+	}
+	if payload.ModelID != nil {
+		asset.ModelID = *payload.ModelID
 	}
 	if payload.Description != nil {
 		asset.Description = *payload.Description

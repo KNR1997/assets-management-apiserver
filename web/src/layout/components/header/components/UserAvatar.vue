@@ -1,16 +1,15 @@
-<template>
-  <n-dropdown :options="options" @select="handleSelect">
-    <div flex cursor-pointer items-center>
-      <img src="/user.svg" class="mr10 h-35 w-35 rounded-full" />
-      <span>admin</span>
-    </div>
-  </n-dropdown>
-</template>
-
-<script setup>
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { renderIcon } from '@/utils'
 import { useRouter } from 'vue-router'
+import { useDialog, useMessage } from 'naive-ui'
+import { useUserStore } from '@/store/modules/user'
+
 const router = useRouter()
+const dialog = useDialog()
+const message = useMessage()
+const { t } = useI18n({ useScope: 'global' })
+const userStore = useUserStore()
 
 const options = [
   {
@@ -29,15 +28,29 @@ function handleSelect(key) {
   if (key === 'profile') {
     router.push('/profile')
   } else if (key === 'logout') {
-    // $dialog.confirm({
-    //   title: t('header.label_logout_dialog_title'),
-    //   type: 'warning',
-    //   content: t('header.text_logout_confirm'),
-    //   confirm() {
-    //     userStore.logout()
-    //     $message.success(t('header.text_logout_success'))
-    //   },
-    // })
+    dialog.warning({
+      title: 'Confirm',
+      content: 'Are you sure?',
+      positiveText: 'Sure',
+      negativeText: 'Not Sure',
+      draggable: true,
+      onPositiveClick: () => {
+        userStore.logout()
+        message.success('Logout!')
+      },
+      onNegativeClick: () => {
+        message.error('Not Sure')
+      },
+    })
   }
 }
 </script>
+
+<template>
+  <n-dropdown :options="options" @select="handleSelect">
+    <div flex cursor-pointer items-center>
+      <img src="/user.svg" class="mr10 h-35 w-35 rounded-full" />
+      <span>admin</span>
+    </div>
+  </n-dropdown>
+</template>
