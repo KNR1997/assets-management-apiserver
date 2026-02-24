@@ -23,6 +23,13 @@ func NewAuditService(repo AuditRepository) AuditService {
 	return &auditService{repo: repo}
 }
 
+func extractAuditContext(ctx context.Context) AuditContext {
+	if val, ok := GetAuditContext(ctx); ok {
+		return val
+	}
+	return AuditContext{}
+}
+
 func (a *auditService) LogCreate(
 	ctx context.Context,
 	tx *gorm.DB,
@@ -32,12 +39,18 @@ func (a *auditService) LogCreate(
 ) error {
 
 	newValue, _ := json.Marshal(obj)
+	auditCtx := extractAuditContext(ctx)
 
 	return a.repo.Log(ctx, tx, AuditEntry{
 		TableName: table,
 		RecordID:  fmt.Sprintf("%v", id),
 		Operation: "CREATE",
 		NewValue:  newValue,
+
+		ChangedBy: auditCtx.UserID,
+		IPAddress: &auditCtx.IPAddress,
+		RequestID: &auditCtx.RequestID,
+		UserAgent: &auditCtx.UserAgent,
 	})
 }
 
